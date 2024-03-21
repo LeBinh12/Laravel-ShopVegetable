@@ -35,4 +35,10 @@ Route::get("NewProduct",[GetUser::class,'NewProduct']);
 Route::get("Product/{id}",[GetUser::class,'ProductDetail']);
 Route::get("ProductCategoryRandom/{id}",[GetUser::class,'GetProductCategoryRanDom']);
 Route::get("Search/{id}",[GetUser::class,'SearchProduct']);
-
+Route::post("AddCustomer",[GetUser::class,'AddCustomer']);
+Route::post("AddOrder/{id}",[GetUser::class,'AddOrder']);
+Route::post("AddOrderDetail/order={order_id}&product={ProductId}",[GetUser::class,'AddOrderDetail']);
+Route::post("AddCart/customer={customer_id}&product={ProductId}",[GetUser::class,'AddCart']);
+Route::delete("DeleteCart/{id}",[GetUser::class,'DeleteCart']);
+Route::delete("DeleteOrder/{id}",[GetUser::class,'DeleteOrder']);
+Route::delete("DeleteOrderDetail/{id}",[GetUser::class,'DeleteOrderDetail']);
