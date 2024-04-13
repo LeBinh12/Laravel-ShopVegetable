@@ -259,34 +259,53 @@ public function AddOrder(Request $request, $customerId){
     ],400);
 }
 
-public function AddCart(Request $request, $customerId,$ProductId){
-    $Date = Carbon::now();
-    $Json = DB::table('carts')->insert([
-        "customer_id"=>$customerId,
-        "product_id"=>$ProductId,
-        "quantity"=>$request->input("quantity"),
-        "Price"=>$request->input("Price"),
-    ]);
-    if($Json){
-        $data = DB::table('carts')->get()->last();
-        return response()->json([
-            "status" => 200,
-            "data" => $data ,
-        ],200);
-    }
-    else return response()->json([
-        "status" => 400,
-        "message" => "Error Add Customer",
+public function AddCart(Request $request){
+    $productId = $request->input('product_id');
+    $quantity = $request->input('quantity');
+    $price = $request->input('price');
+    $uid = $request->input('uid');
+    $json = DB::table('carts')->where('uid', $uid)->where('product_id', $productId)->first();
+    if($json){
+        // Sản phẩm đã tồn tại trong giỏ hàng, cập nhật số lượng
+        $newQuantity = $json->quantity + $quantity;
+        DB::table('carts')
+            ->where('uid', $uid)
+            ->where('product_id', $productId)
+            ->update(['quantity' => $newQuantity]);
 
-    ],400);
+    }   
+    else {
+        // Sản phẩm chưa tồn tại trong giỏ hàng, thêm mới
+        DB::table('carts')->insert([
+            'uid' => $uid,
+            'product_id' => $productId,
+            'quantity' => $quantity,
+            'price' => $price,
+
+        ]);
+
+    }
+    return response()->json([
+        'status' => 200,
+        'message' => 'Product added to cart successfully.',
+    ], 200);
 }
 
-public function DeleteCart($id){
-    $json = DB::table("carts")->where("id",$id)->delete();
+public function DeleteCart(Request $request){
+    $id = $request->input('Cart_id');
+    $uid = $request->input('uid');
+    $json = DB::table("carts")->where("Cart_id",$id)->where("uid",$uid)->delete();
+    if($json){
     return response()->json([
         "status" => 200,
         "message" => "Delete Customer successfully",
     ],200);
+    } else{
+        return response()->json([
+            "status" => 400,
+            "message" => "Delete Customer failed",
+        ],400);
+    }
 }
 public function DeleteOrder($id){
     $json = DB::table("order")->where("id",$id)->delete();
@@ -302,6 +321,102 @@ public function DeleteOrderDetail($id){
         "message" => "Delete Customer successfully",
     ],200);
 }
+
+public function GetCart($uid){
+
+    $json = DB::table('carts')->join("Products", "carts.product_id","=","products.id")
+                                ->select("carts.*","products.*")
+                                ->where("carts.uid",$uid)
+                                ->get();
+     
+      return response()->json([
+        "status" => 200,
+        "data" => $json,
+    ],200);
+}
+
+public function UpQuantity(Request $request){
+    $id = $request->input('Cart_id');
+    $uid = $request->input('uid');
+
+    $json = DB::table("carts")->where("Cart_id",$id)->where("uid",$uid)->first();
+
+    if($json){
+            $NewQuantity = $json->quantity +1;
+             DB::table("carts")->where("uid",$uid)->where("Cart_id",$id)
+             ->update(["quantity" =>$NewQuantity]);
+             return response()->json([
+                "status" => 200,
+                "message" => "Up Quantity successfully"
+              ],200);
+
+    }else{
+  return response()->json([
+    "status" => 400,
+    "message" => "Error while processing quantity"
+  ],400);
+}
+}
+
+public function DownQuantity(Request $request){
+    $id = $request->input('Cart_id');
+    $uid = $request->input('uid');
+
+    $json = DB::table("carts")->where("Cart_id",$id)->where("uid",$uid)->first();
+
+    if($json){
+            $NewQuantity = $json->quantity - 1;
+             DB::table("carts")->where("uid",$uid)->where("Cart_id",$id)
+             ->update(["quantity" =>$NewQuantity]);
+             return response()->json([
+                "status" => 200,
+                "message" => "Up Quantity successfully"
+              ],200);
+
+    }else{
+  return response()->json([
+    "status" => 400,
+    "message" => "Error while processing quantity"
+  ],400);
+}
+}
+
+
+////
+// Điền thông tin
+// $message = "";
+// $month_error = "";
+// $day_error = "";
+// $year_error = "";
+  
+// // Create your variables here:
+// $month_options = [
+//   "options" => ["min_range"=>1,"max_range"=>12]
+// ];
+// $day_options = ["options"=>["min_range"=>1,"max_range"=>31]];
+// $year_options = ["options"=>["min_range"=>1903,"max_range"=>2024]];
+
+// // Define your function here:
+// function validateInput($type,&$error,$options_arr) {
+//     if(!filter_var($_POST[$type],FILTER_VALIDATE_INT,$options_arr)){
+//       $error = "* Invalid ${type}";
+//       return FALSE;
+//     }else{
+//       Return TRUE;
+//     }
+// }
+
+//   if ($_SERVER["REQUEST_METHOD"] == "POST") {
+//     // Uncomment the code below:
+//     $test_month = validateInput("month", $month_error, $month_options);
+//     $test_day = validateInput("day", $day_error, $day_options);
+//     $test_year = validateInput("year", $year_error, $year_options);    
+//     if ($test_month && $test_day && $test_year){
+//       $message = "Your birthday is: {$_POST["month"]}/{$_POST["day"]}/{$_POST["year"]}";
+//     }  
+//   }
+
+
 
 
 
