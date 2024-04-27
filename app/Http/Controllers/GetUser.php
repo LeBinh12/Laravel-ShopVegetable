@@ -194,28 +194,6 @@ public function SearchProduct($Name){
          "data"=>$json
      ],200);
 }
-
-public function AddCustomer(Request $request){
-    $Json = DB::table('customers')->insert([
-        "Name" => $request->input('Name'),
-        "Phone" => $request->input('Phone'),
-        "Address" => $request->input('Address'),
-        "Email" => $request->input('Email'),
-    ]);
-    if($Json){
-        $data = DB::table('customers')->get()->last();
-        return response()->json([
-            "status" => 200,
-            "data" => $data ,
-        ],200);
-    }
-    else return response()->json([
-        "status" => 400,
-        "message" => "Error Add Customer",
-
-    ],400);
-}
-
 public function AddOrderDetail(Request $request, $order_id , $ProductId){
     $Json = DB::table('order_details')->insert([
         "Quantity" => $request->input('Quantity'),
@@ -236,29 +214,6 @@ public function AddOrderDetail(Request $request, $order_id , $ProductId){
 
     ],400);
 }
-
-public function AddOrder(Request $request, $customerId){
-    $Date = Carbon::now();
-    $Json = DB::table('order')->insert([
-        "Customer_id"=>$customerId,
-        "Total"=>$request->input("Total"),
-        "Status"=>$request->input("Status"),
-        "Date"=>$Date,
-    ]);
-    if($Json){
-        $data = DB::table('order')->get()->last();
-        return response()->json([
-            "status" => 200,
-            "data" => $data ,
-        ],200);
-    }
-    else return response()->json([
-        "status" => 400,
-        "message" => "Error Add Customer",
-
-    ],400);
-}
-
 public function AddCart(Request $request){
     $productId = $request->input('product_id');
     $quantity = $request->input('quantity');
@@ -324,12 +279,12 @@ public function DeleteOrderDetail($id){
 
 public function GetCart($uid){
 
-    $json = DB::table('carts')->join("Products", "carts.product_id","=","products.id")
+    $json = DB::table('carts')->join("products", "carts.product_id","=","products.id")
                                 ->select("carts.*","products.*")
                                 ->where("carts.uid",$uid)
                                 ->get();
      
-      return response()->json([
+    return response()->json([
         "status" => 200,
         "data" => $json,
     ],200);
@@ -380,6 +335,99 @@ public function DownQuantity(Request $request){
   ],400);
 }
 }
+
+public function AddOrder(Request $request){
+    $iddonhang = $request->input('iddonhang');
+    $Name = $request->input('FullName');
+    $Email = $request->input('Email');
+    $Address = $request->input('Address');
+    $Phone = $request->input('Phone');
+    $uid = $request->input('uid');
+    $Nation = $request->input('National');
+    $CityOrTown = $request->input('TownOrCity');
+    $Total = $request->input('Total');
+    $OrderNote = $request->input('OrderNote');
+    $json = DB::table('order')->insert([
+        "iddonhang" => $iddonhang,
+        "FullName" => $Name,
+        "Phone" => $Phone,
+        "Address" => $Address,
+        "Email" => $Email,
+        "uid" => $uid,
+        "National" => $Nation,
+        "TownOrCity" => $CityOrTown,
+        "Total" => $Total,
+        "OrderNote"=> $OrderNote,
+    ]);
+    if($json){
+        $data = DB::table('order')->get()->last();
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+
+public function addOrderDetails(Request $request){
+    $Quantity = $request->input('Quantity');
+    $Price = $request->input('Price');
+    $Product_id = $request->input('Product_id');
+    $uid = $request->input('uid');
+    $iddonhang = $request->input('iddonhang');
+    $json = DB::table('order_details')->insert([
+        'Quantity' => $Quantity,
+        'Price' => $Price,
+        'Product_id' => $Product_id,
+        'uid' => $uid,
+        'iddonhang' => $iddonhang
+    ]);
+    if($json){
+        $data = DB::table('order_details')->get();
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    } else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+
+}
+
+public function DeleteAllCart($uid){
+    $json = DB::table("carts")->where("uid",$uid)->delete();
+    if($json){
+    return response()->json([
+        "status" => 200,
+        "message" => "Delete Customer successfully",
+    ],200);
+    } else{
+        return response()->json([
+            "status" => 400,
+            "message" => "Delete Customer failed",
+        ],400);
+    }
+}
+
+public function GetOrderDetail($uid){
+    $json = DB::table("order_details")->join("products","order_details.Product_id"," = ", "products.id")
+                                    ->select("order_details.*","products.*")
+                                    ->where("order_details.uid",$uid)
+                                    ->get();
+    return response()->json([
+        "status" => 200,
+        "data" => $json,
+    ],200);
+}
+
+
+
+
+
 
 
 ////
