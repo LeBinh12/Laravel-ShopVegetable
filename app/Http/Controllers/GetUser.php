@@ -14,6 +14,7 @@ class GetUser extends Controller
     public function AddCategory(Request $request){
         $json = DB::table('categories')->insert([
             "Name"=>$request->input("Name"),
+            "Image"=>$request->input("Image"),
         ]);
         if($json){
             $data = DB::table('categories')->get()->last();
@@ -36,7 +37,16 @@ class GetUser extends Controller
     }
     public function GetProductCategory($CategoryID){
         $json = DB::table('products')->where('Category_id',$CategoryID )->get();
-        return response()->json($json);   
+        if($json){
+            return response()->json([
+                "status"=> 200,
+                "data"=>$json
+            ],200);
+        }
+        else return response()->json([
+            "status"=> 400,
+            "message"=>"Error Add Product"
+        ],400);   
     }   
 
     public function AddProduct(Request $Request){
@@ -47,6 +57,7 @@ class GetUser extends Controller
             "Quantity"=>$Request->input('Quantity'),
             "Detail"=>$Request->input('Detail'),
             "Category_id"=>$Request->input('Category_id'),
+            "Sale"=>$Request->input('Sale'),
         ]);
         if($json){
             $data = DB::table('products')->get()->last();
@@ -191,7 +202,7 @@ public function SearchProduct($Name){
                                 ->get(); 
     return response()->json([
         "status" => 200,
-         "data"=>$json
+        "data"=>$json
      ],200);
 }
 public function AddOrderDetail(Request $request, $order_id , $ProductId){
@@ -262,20 +273,14 @@ public function DeleteCart(Request $request){
         ],400);
     }
 }
-public function DeleteOrder($id){
-    $json = DB::table("order")->where("id",$id)->delete();
+public function DeleteOrder($uid){
+    $json = DB::table("order")->where("uid",$uid)->delete();
     return response()->json([
         "status" => 200,
         "message" => "Delete Customer successfully",
     ],200);
 }
-public function DeleteOrderDetail($id){
-    $json = DB::table("order_details")->where("id",$id)->delete();
-    return response()->json([
-        "status" => 200,
-        "message" => "Delete Customer successfully",
-    ],200);
-}
+
 
 public function GetCart($uid){
 
@@ -379,7 +384,7 @@ public function addOrderDetails(Request $request){
     $uid = $request->input('uid');
     $iddonhang = $request->input('iddonhang');
     $json = DB::table('order_details')->insert([
-        'Quantity' => $Quantity,
+        'Quantity_Details' => $Quantity,
         'Price' => $Price,
         'Product_id' => $Product_id,
         'uid' => $uid,
@@ -398,6 +403,8 @@ public function addOrderDetails(Request $request){
 
 }
 
+
+
 public function DeleteAllCart($uid){
     $json = DB::table("carts")->where("uid",$uid)->delete();
     if($json){
@@ -414,8 +421,9 @@ public function DeleteAllCart($uid){
 }
 
 public function GetOrderDetail($uid){
-    $json = DB::table("order_details")->join("products","order_details.Product_id"," = ", "products.id")
-                                    ->select("order_details.*","products.*")
+    $json = DB::table("order_details")->join("products","order_details.Product_id","=","products.id")
+                                    ->join("order","order_details.iddonhang","=","order.iddonhang")
+                                    ->select("order_details.*","products.*","order.*")
                                     ->where("order_details.uid",$uid)
                                     ->get();
     return response()->json([
@@ -423,6 +431,254 @@ public function GetOrderDetail($uid){
         "data" => $json,
     ],200);
 }
+
+
+public function DeleteOrderDetails($uid){
+    $json = DB::table("order_details")->Where("uid",$uid)->delete();
+    return response()->json([
+        "status" => 200,
+        "message" => "Delete Customer successfully",
+    ],200);
+}
+
+public function Login(Request $request){
+    $email = $request->input('email');
+    $password = $request->input('password');
+    $json = DB::table('user')->Where("Email",$email)->Where("Password",$password)->get()->last();
+    if($json){
+        return response()->json([
+            "status" => 200,
+            "message" => "Login successfully",
+        ],200);
+        } else{
+            return response()->json([
+                "status" => 400,
+                "message" => "Login failed",
+            ],400);
+        }
+}
+
+public function GetCategoryID($id){
+    $json = DB::table('categories')->where("id",$id)->get();
+    return response()->json([
+        "status" => 200,
+        "data"=>$json
+    ],200);
+}
+public function UpdateProduct(Request $Request,$id){
+    $Name = $Request->input('Name');
+    $Price = $Request->input('Price');
+    $Image = $Request->input('Image');
+    $Quantity = $Request->input('Quantity');
+    $Detail = $Request->input('Detail');
+    $CategoryID = $Request->input('Category_id');
+    $Sale = $Request->input('Sale');
+    $json = DB::table('products')->where('id',$id)->update([
+            "Name"=>$Name,
+            "Price"=>$Price,
+            "Image"=>$Image,
+            "Quantity"=>$Quantity,
+            "Detail"=>$Detail,
+            "Category_id"=>$CategoryID,
+            "Sale"=>$Sale,
+    ]);
+    if($json){
+        $data = DB::table('products')->get()->last();
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function AddBanner(Request $request){
+    $Image = $request->input('Image');
+    $json = DB::table('banner')->insert([
+        'Image'=>$Image
+    ]);
+    if($json){
+        $data = DB::table('banner')->get()->last();
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function DeleteBanner($id){
+    $json = DB::table('Banner')->where('id',$id)->delete();
+    if($json){
+        return response()->json([
+            "status"=> 200,
+            "message"=>"Successfully Delete Banner"
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function GetFullBanner(){
+    $json = DB::table('Banner')->get();
+    return response()->json([
+        "status" => 200,
+        "data"=>$json
+    ],200);
+}
+public function UpdateCategory(Request $request,$id){
+    $json = DB::table('categories')->where('id',$id)->Update([
+        "Name"=>$request->input('Name'),
+        "Image"=>$request->input('Image'),
+    ]);
+    if($json){
+        $data = DB::table('categories')->get()->last();
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+
+public function OrderDetailSearch($id){
+    $json = DB::table('order_details')->where('iddonhang',$id)->get();
+    if($json){
+        return response()->json([
+            "status"=> 200,
+            "data"=>$json
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function UpdateStatusOrderDetail(Request $request, $id){
+    $status = $request->input('status');
+
+
+    $updated = DB::table('order_details')->where('id', $id)->update([
+        "Status" => $status,
+    ]);
+
+    if ($updated) {
+        return response()->json([
+            "status" => 200,
+            "message" => "Order detail status updated successfully",
+        ], 200);
+    } else {
+        return response()->json([
+            "status" => 400,
+            "message" => "Error updating order detail status",
+        ], 400);
+    }
+}
+public function DeleteOrderDetail($id){
+    $json = DB::table('order_details')->where('id', $id)->delete();
+    if ($json) {
+        return response()->json([
+            "status" => 200,
+            "message" => "Order detail status Delete successfully",
+        ], 200);
+    } else {
+        return response()->json([
+            "status" => 400,
+            "message" => "Error Delete order detail status",
+        ], 400);
+    }
+}
+
+public function CustomerIdSearch($id){
+    $json = DB::table('order')->where('iddonhang',$id)->get();
+    if($json){
+        return response()->json([
+            "status"=> 200,
+            "data"=>$json
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function CustomerId($id){
+    $json = DB::table('order')->where('id',$id)->get();
+    if($json){
+        return response()->json([
+            "status"=> 200,
+            "data"=>$json
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function UpdateCustomer(Request $request,$id){
+    $FullName = $request->input('FullName');
+    $National = $request->input('National');
+    $Address = $request->input('Address');
+    $TownOrCity = $request->input('TownOrCity');
+    $Phone = $request->input('Phone');
+    $Email = $request->input('Email');
+    $json = DB::table('order')->where('id',$id)->Update([
+        "FullName"=>$FullName,
+        "National"=>$National,
+        "Address"=>$Address,
+        "TownOrCity"=>$TownOrCity,
+        "Phone"=>$Phone,
+        "Email"=>$Email
+
+    ]);
+    if($json){
+        $data = DB::table('order')->get()->where("id",$id);
+        return response()->json([
+            "status"=> 200,
+            "data"=>$data
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+public function DeleteCustomer($id){
+    $json = DB::table('order')->where('id', $id)->delete();
+    if ($json) {
+        return response()->json([
+            "status" => 200,
+            "message" => "Order Customer status Delete successfully",
+        ], 200);
+    } else {
+        return response()->json([
+            "status" => 400,
+            "message" => "Error Delete Customer status",
+        ], 400);
+    }
+}
+public function CustomerSearch($Name){
+    $json = DB::table('order')->where('FullName','LIKE','%'.$Name.'%')->get();
+    if($json){
+        return response()->json([
+            "status"=> 200,
+            "data"=>$json
+        ],200);
+    }
+    else return response()->json([
+        "status"=> 400,
+        "message"=>"Error Add Product"
+    ],400);
+}
+
 
 
 
